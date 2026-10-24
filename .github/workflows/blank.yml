@@ -17,42 +17,40 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
+      - name: Check Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la "$ANDROID_HOME"
+          test -d "$ANDROID_HOME"
+
       - name: Find Android project
         shell: bash
         run: |
-          echo "Repository files:"
-          find . -maxdepth 5 -type f | sort
-
-          PROJECT_FILE=$(find . -maxdepth 5 \
+          PROJECT_FILE=$(find . -maxdepth 6 \
             -name settings.gradle.kts -print -quit)
 
           if [ -z "$PROJECT_FILE" ]; then
-            echo "::error::settings.gradle.kts not found"
+            echo "::error::Android project not found"
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$PROJECT_FILE")
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          echo "Project found: $PROJECT_DIR"
+          echo "Project: $PROJECT_DIR"
 
       - name: Build APK
         shell: bash
         run: |
           set -o pipefail
           cd "$PROJECT_DIR"
-
           gradle :app:assembleDebug \
             --no-daemon \
-            --stacktrace \
-            --info 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+            --stacktrace 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Upload build logs
         if: always()
