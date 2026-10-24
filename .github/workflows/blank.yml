@@ -8,6 +8,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: DeliveryAnalyzer-Android-v0.2/DeliveryAnalyzer
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -18,17 +22,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Build Android APK
-        run: gradle assembleDebug --no-daemon
+      - name: Check project structure
+        run: |
+          pwd
+          ls -la
+          test -f settings.gradle.kts
+          test -f app/build.gradle.kts
+
+      - name: Build APK
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: DeliveryAnalyzer-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: DeliveryAnalyzer-Android-v0.2/DeliveryAnalyzer/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
